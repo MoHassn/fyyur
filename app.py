@@ -131,29 +131,29 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
+  data = []
+  cities = set()
+  for venue in Venue.query.all():
+    cities.add((venue.city, venue.state))
+  for city in cities:
+    venues = Venue.query.filter(Venue.city == city[0]).filter(Venue.state == city[1]).all()
+    venues_data = []
+    for venue in venues:
+      upcoming_shows = 0
+      for show in venue.shows:
+        if not past(show.start_time):
+          upcoming_shows += 1
+      venues_data.append({
+        "id": venue.id,
+        "name": venue.name,
+        "num_upcoming_shows": upcoming_shows,
+      })
+    data.append({
+    "city": city[0],
+    "state": city[1],
+    "venues": venues_data
+    })
+
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
