@@ -140,8 +140,9 @@ def venues():
     venues = Venue.query.filter(Venue.city == city[0]).filter(Venue.state == city[1]).all()
     venues_data = []
     for venue in venues:
+      shows = db.session.query(Shows).join(Venue).filter(Shows.venue_id == venue.id).all()
       upcoming_shows = 0
-      for show in venue.shows:
+      for show in shows:
         if not past(show.start_time):
           upcoming_shows += 1
       venues_data.append({
@@ -163,8 +164,9 @@ def search_venues():
   result = Venue.query.filter(Venue.name.ilike("%" + search_term + "%"))
   response_data = []
   for venue in result:
+    shows = db.session.query(Shows).join(Venue).filter(Shows.venue_id == venue.id).all()
     upcoming_shows = 0
-    for show in venue.shows:
+    for show in shows:
       if not past(show.start_time):
         upcoming_shows += 1
     response_data.append({
@@ -183,11 +185,12 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   venue = Venue.query.get(venue_id)
+  shows = db.session.query(Shows).join(Venue).filter(Shows.venue_id == venue_id).all()
   data = {key:venue.__dict__[key] for key in["id", "name", "address", "city", "state", "phone", "website", "facebook_link", "seeking_talent", "seeking_description", "image_link"]}
   data["genres"] = json.loads(venue.__dict__['genres'])
   past_shows = []
   upcoming_shows = []
-  for show in venue.shows:
+  for show in shows:
     if past(show.start_time):
       past_shows.append({
         "artist_id": show.artist.id,
@@ -252,9 +255,10 @@ def create_venue_submission():
 def delete_venue(venue_id):
   try:
     venue = Venue.query.get(venue_id)
+    shows = db.session.query(Shows).join(Venue).filter(Shows.venue_id == venue_id).all()
 
     # first deleted the shows associated to this venue
-    for show in venue.show:
+    for show in show:
       db.session.delete(show)
 
     # delete the venue
@@ -288,8 +292,9 @@ def search_artists():
   result = Artist.query.filter(Artist.name.ilike("%" + search_term + "%"))
   response_data = []
   for artist in result:
+    shows = db.session.query(Shows).join(Artist).filter(Shows.artist_id == artist.id).all()
     upcoming_shows = 0
-    for show in artist.shows:
+    for show in shows:
       if not past(show.start_time):
         upcoming_shows += 1
     response_data.append({
@@ -306,11 +311,12 @@ def search_artists():
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
   artist = Artist.query.get(artist_id)
+  shows = db.session.query(Shows).join(Artist).filter(Shows.artist_id == artist_id).all()
   data = {key:artist.__dict__[key] for key in ["id","name","city","state","phone","website","facebook_link","seeking_venue","seeking_description","image_link"]}
   data["genres"] = json.loads(artist.__dict__['genres'])
   past_shows = []
   upcoming_shows = []
-  for show in artist.shows:
+  for show in shows:
     if past(show.start_time):
       past_shows.append({
         "venue_id": show.venue.id,
